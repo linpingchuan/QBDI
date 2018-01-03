@@ -70,9 +70,8 @@ private:
     rword                           total_translation_size;
 
     VMInstanceRef              vminstance;
-    llvm::MCInstrInfo&         MCII;
-    llvm::MCRegisterInfo&      MRI;
-    Assembly&                  assembly;
+    Assembly*                  assembly[CPUMode::COUNT];
+    LLVMCPU*                   llvmCPU[CPUMode::COUNT];
 
     void eraseRegion(size_t r);
 
@@ -89,7 +88,7 @@ private:
 
 public:
 
-    ExecBlockManager(llvm::MCInstrInfo& MCII, llvm::MCRegisterInfo& MRI, Assembly& assembly, VMInstanceRef vminstance = nullptr);
+    ExecBlockManager(LLVMCPU* llvmCPU[CPUMode::COUNT], Assembly* assembly[CPUMode::COUNT], VMInstanceRef vminstance = nullptr);
 
     ~ExecBlockManager();
 
