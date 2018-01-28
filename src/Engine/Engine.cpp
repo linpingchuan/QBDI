@@ -287,10 +287,6 @@ bool Engine::run(rword start, rword stop) {
 
     // Execute basic block per basic block
     do {
-        #if defined(QBDI_ARCH_ARM)
-        curCPUMode = currentPC & 1 ? CPUMode::Thumb : CPUMode::ARM;
-        currentPC = currentPC & (~1);
-        #endif
         // If this PC is not instrumented try to transfer execution
         if(execBroker->isInstrumented(currentPC) == false &&
            execBroker->canTransferExecution(curGPRState)) {
@@ -303,6 +299,15 @@ bool Engine::run(rword start, rword stop) {
         }
         // Else execute through DBI
         else {
+            #if defined(QBDI_ARCH_ARM)
+            // Handle ARM mode switching, only at the start of an execution or when the guest 
+            // signal an exchange.
+            if(curExecBlock == nullptr || curExecBlock->getContext()->hostState.exchange == 1) {
+                curCPUMode = currentPC & 1 ? CPUMode::Thumb : CPUMode::ARM;
+                currentPC = currentPC & (~1);
+            }
+            #endif
+
             bool newBasicBlock = false;
             LogDebug("Engine::run", "Executing 0x%" PRIRWORD " through DBI", currentPC);
             // Is cache flush pending?
