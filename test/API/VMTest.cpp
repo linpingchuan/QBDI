@@ -207,6 +207,25 @@ QBDI::VMAction evilCbk(QBDI::VMInstanceRef vm, QBDI::GPRState *gprState, QBDI::F
     return QBDI::VMAction::CONTINUE;
 }
 
+QBDI::VMAction breakpointCB(QBDI::VMInstanceRef vm, QBDI::GPRState *gprState, QBDI::FPRState *fprState, void *data) {
+    *((uint32_t*)data) = 0xdeadbeef;
+    return QBDI::VMAction::CONTINUE;
+}
+
+/* This test is used to ensure that addCodeAddrCB is not broken */
+TEST_F(VMTest, Breakpoint) {
+    QBDI::simulateCall(state, FAKE_RET_ADDR);
+    uint32_t bp = 0;
+    vm->addCodeAddrCB((QBDI::rword)dummyFun0, QBDI::InstPosition::POSTINST, breakpointCB, &bp);
+    vm->run((QBDI::rword) dummyFun0, (QBDI::rword) FAKE_RET_ADDR);
+    QBDI::rword ret = QBDI_GPR_GET(state, QBDI::REG_RETURN);
+    ASSERT_EQ(ret, (QBDI::rword) 42);
+    ASSERT_EQ(bp, 0xdeadbeef);
+
+    SUCCEED();
+    
+}
+
 
 TEST_F(VMTest, InstCallback) {
     QBDI::rword info[2] = {42, 0};
